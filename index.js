@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 
 //middleware
@@ -22,6 +23,30 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const AllrecipeCollection = client
+      .db("YummlyBakes")
+      .collection("allRecipes");
+    const UsersCollection = client.db("YummlyBakes").collection("users");
+
+    //JWT token for user
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "8h",
+      });
+      res.send({ token });
+    });
+    //API to store newly logged in user
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email };
+      const existingUser = await UsersCollection.findOne(query);
+      if (existingUser) {
+        res.send({ message: "user is already exist", insertedId: null });
+      }
+      const result = await UsersCollection.insertOne(user);
+      res.send(result);
+    });
   } finally {
   }
 }
