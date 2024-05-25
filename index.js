@@ -34,7 +34,7 @@ async function run() {
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "8h",
       });
-      console.log(token)
+
       res.send({ token });
     });
     //API to store newly logged in user
@@ -43,51 +43,83 @@ async function run() {
       const query = { email: user.email };
       const existingUser = await UsersCollection.findOne(query);
       if (existingUser) {
-       return res.send({ message: "user is already exist", insertedId: null });
+        return res.send({ message: "user is already exist", insertedId: null });
       }
       const result = await UsersCollection.insertOne(user);
       res.send(result);
     });
     //API to decrease Coin
-    app.post('/updateCoin',async(req,res)=>{
-      const {userId} = req.body;
-    const result = await UsersCollection.findOneAndUpdate({_id: new ObjectId(userId)},{
-      $inc:{coins: -10}
-    })
-    res.send(result)
-    })
+    app.post("/updateCoin", async (req, res) => {
+      const { userId } = req.body;
+      const result = await UsersCollection.findOneAndUpdate(
+        { _id: new ObjectId(userId) },
+        {
+          $inc: { coins: -10 },
+        }
+      );
+      res.send(result);
+    });
+    //API to Increase Coin
+    app.post("/increseCoin", async (req, res) => {
+      const { authorEmail } = req.body;
+      const result = await UsersCollection.findOneAndUpdate(
+        { email: authorEmail },
+        {
+          $inc: { coins: 1 },
+        }
+      );
+      res.send(result);
+    });
     //API to store all the recipe
-    app.post('/allRecipe',async(req,res)=>{
+    app.post("/allRecipe", async (req, res) => {
       const recipes = req.body;
       const result = await AllrecipeCollection.insertOne(recipes);
-      res.send(result)
+      res.send(result);
     });
-//API to  get specific recipe fields 
-app.get('/recipes',async(req,res)=>{
-  const projection = {name:1,photo:1,purchased_by:1,authorEmail:1,country:1}
-  const result = await AllrecipeCollection.find({},{projection}).toArray();
-  res.send(result);
-
-})
-//API to get All Recipes details
-app.get('/allRecipes/:id', async(req,res)=>{
-  const id = req.params.id;
-  const query = {_id: new ObjectId(id)}
-  const result = await AllrecipeCollection.find(query).toArray()
-  res.send(result);
-})
-//API to get specific user data based on email
-app.get('/user/:email',async(req,res)=>{
-  const UserEmail = req.params.email;
-  const query= {email:UserEmail}
-  const result = await UsersCollection.findOne(query)
-  res.send(result);
-})
-
-
-
-
-
+    //API to update some fields of recipe
+    app.patch("/updateRecipe", async (req, res) => {
+      const { recipeId, purchaser } = req.body;
+      const filter = { _id: new ObjectId(recipeId) };
+      const updatedDoc = {
+        $inc: {
+          watchCount: 1,
+        },
+        $push: {
+          purchased_by: purchaser,
+        },
+      };
+      const result = await AllrecipeCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+    //API to  get specific recipe fields
+    app.get("/recipes", async (req, res) => {
+      const projection = {
+        name: 1,
+        photo: 1,
+        purchased_by: 1,
+        authorEmail: 1,
+        country: 1,
+      };
+      const result = await AllrecipeCollection.find(
+        {},
+        { projection }
+      ).toArray();
+      res.send(result);
+    });
+    //API to get All Recipes details
+    app.get("/allRecipes/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await AllrecipeCollection.find(query).toArray();
+      res.send(result);
+    });
+    //API to get specific user data based on email
+    app.get("/user/:email", async (req, res) => {
+      const UserEmail = req.params.email;
+      const query = { email: UserEmail };
+      const result = await UsersCollection.findOne(query);
+      res.send(result);
+    });
   } finally {
   }
 }
