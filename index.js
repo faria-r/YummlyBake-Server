@@ -110,7 +110,7 @@ async function run() {
     app.get("/allRecipes/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const result = await AllrecipeCollection.find(query).toArray();
+      const result = await AllrecipeCollection.findOne(query)
       res.send(result);
     });
     //API to get specific user data based on email
