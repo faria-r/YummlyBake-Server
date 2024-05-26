@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 
@@ -36,6 +37,19 @@ async function run() {
       });
 
       res.send({ token });
+    });
+    //API for payment intent
+    app.post("/create-payment", async (req, res) => {
+      const { amount } = req.body;
+      const Paidamount = parseInt(amount * 1000);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Paidamount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
     });
     //API to store newly logged in user
     app.post("/users", async (req, res) => {
@@ -110,7 +124,7 @@ async function run() {
     app.get("/allRecipes/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const result = await AllrecipeCollection.findOne(query)
+      const result = await AllrecipeCollection.findOne(query);
       res.send(result);
     });
     //API to get specific user data based on email
