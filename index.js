@@ -134,6 +134,7 @@ async function run() {
       const result = await UsersCollection.findOne(query);
       res.send(result);
     });
+    //API to increase buyer coin
   } finally {
   }
 }
