@@ -38,10 +38,12 @@ async function run() {
 
       res.send({ token });
     });
+
+   
     //API for payment intent
     app.post("/create-payment", async (req, res) => {
-      const { amount } = req.body;
-      const Paidamount = parseInt(amount * 100);
+      const { amounts } = req.body;
+      const Paidamount = parseInt(amounts * 100);
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Paidamount,
         currency: "usd",
@@ -60,6 +62,12 @@ async function run() {
         return res.send({ message: "user is already exist", insertedId: null });
       }
       const result = await UsersCollection.insertOne(user);
+      res.send(result);
+    });
+    //API to get all user
+    app.get("/users", async (req, res) => {
+      const query = {};
+      const result = await UsersCollection.find(query).toArray();
       res.send(result);
     });
     //API to decrease Coin
@@ -113,6 +121,7 @@ async function run() {
         purchased_by: 1,
         authorEmail: 1,
         country: 1,
+        category:1
       };
       const result = await AllrecipeCollection.find(
         {},
@@ -127,6 +136,13 @@ async function run() {
       const result = await AllrecipeCollection.findOne(query);
       res.send(result);
     });
+    //API to get category based recipe
+    app.get("/recipes/:category", async (req, res) => {
+      const category = req.params.category;
+      const query = { category: category };
+      const result = await AllrecipeCollection.find(query).toArray();
+      res.send(result);
+    });
     //API to get specific user data based on email
     app.get("/user/:email", async (req, res) => {
       const UserEmail = req.params.email;
@@ -134,7 +150,17 @@ async function run() {
       const result = await UsersCollection.findOne(query);
       res.send(result);
     });
-    //API to increase buyer && retrive keys
+    //API to increase buyer coins 
+    app.post('/update-coins',async(req,res)=>{
+      const {buyer,coinsInfo} = req.body;
+      // const query = {email:buyer}
+      const result = await UsersCollection.findOneAndUpdate({ email: buyer },
+        {
+          $inc: { coins: parseInt(coinsInfo) },
+        })
+        res.send(result)
+    })
+
   } finally {
   }
 }
